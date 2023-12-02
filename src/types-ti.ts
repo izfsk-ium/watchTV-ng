@@ -42,6 +42,7 @@ export const Entry = t.iface([], {
 });
 
 export const MenuEntry = t.iface([], {
+  "id": "number",
   "type": t.union(t.lit("Divider"), t.lit("Entry")),
   "name": t.opt("string"),
   "href": t.opt("string"),

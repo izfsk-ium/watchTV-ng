@@ -10,6 +10,7 @@ export interface LocalConfigure {
     data: {
         /**
          * @field type : either local JSON string in localStorage or remote URL
+         *               URL should 
          * @field data : if type is local then JSON string else url
          */
         type: "Local" | "Remote",
@@ -65,6 +66,7 @@ export interface MenuEntry {
      * @field name? is display name
      * @field href? is link target, 
      */
+    id: number,
     type: "Divider" | "Entry",
     name?: string,
     href?: string

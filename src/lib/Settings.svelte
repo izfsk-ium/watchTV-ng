@@ -5,7 +5,11 @@
     import clone from "just-clone";
     import type { LocalConfigure } from "../types";
     import { updateTheme } from "../utils/theme";
-    import { downloadString, isValidHttpUrl } from "../utils/misc";
+    import {
+        downloadString,
+        fetchWithCROSProxy,
+        isValidHttpUrl,
+    } from "../utils/misc";
     import { createCheckers, func } from "ts-interface-checker";
     import exportedTypeSuite from "../types-ti";
     import { CONFIGURE } from "../configure";
@@ -22,13 +26,17 @@
 
     async function checkRemoteResources() {
         try {
-            const request = await fetch(remoteResourceURL);
+            const request = await fetchWithCROSProxy(remoteResourceURL);
             const data = await request.json();
 
+            if (data.status.http_code != 200) {
+                throw Error(data.status.http_code.toString());
+            }
+
             // verify if json data is valid
-            console.debug("Checking data ", data);
+            console.debug("Checking data ", data.contents);
             const { PageConfigure } = createCheckers(exportedTypeSuite);
-            const result = PageConfigure.strictCheck(data);
+            const result = PageConfigure.strictCheck(data.contents);
             console.debug("Check result : ", result);
 
             // now modify configure

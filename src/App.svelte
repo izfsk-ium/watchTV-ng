@@ -12,6 +12,7 @@
   import type { PageConfigure } from "./types";
   import GridBox from "./lib/GridBox.svelte";
   import Settings from "./lib/Settings.svelte";
+  import { fetchWithCROSProxy } from "./utils/misc";
 
   onMount(async () => {
     // read application configure
@@ -48,17 +49,26 @@
       }
     } else {
       try {
-        const request = await fetch($localConfigure.data.data);
-        const fetchedData: PageConfigure = await request.json();
-        applicationState.init({
-          pageConfigure: fetchedData,
-          ptrPage: Object.keys(fetchedData.pages)[0],
-        });
+        // CROS solution
+        const request = await fetchWithCROSProxy($localConfigure.data.data);
+        const fetchedData: any = await request.json();
+        if (fetchedData.status.http_code == 200) {
+          applicationState.init({
+            pageConfigure: fetchedData,
+            ptrPage: Object.keys(fetchedData.pages)[0],
+          });
+        } else {
+          throw Error(fetchedData.status.http_code.toString());
+        }
       } catch (e) {
-        console.debug(
-          "Unable to load page configure from " + $localConfigure.data.data,
-          e,
-        );
+        errorMsg =
+          "出错了：\n" +
+          "Unable to load page configure from \n" +
+          $localConfigure.data.data +
+          "(" +
+          (e as any).toString() +
+          ")";
+        isError = true;
       }
     }
 
@@ -70,12 +80,26 @@
   }
 
   let isLoading: boolean = true;
+  let isError: boolean = false;
+  let errorMsg: string = "";
   let showSettingsPage: boolean = false;
 </script>
 
 <main>
   {#if isLoading}
     <p id="loading">Loading</p>
+  {:else if isError}
+    <section class="error">
+      <h1>错误</h1>
+      <p>
+        <strong>详细信息：</strong><br /><code>{errorMsg}</code>
+      </p>
+      <p>
+        <a href="/">刷新</a>
+        <!-- svelte-ignore a11y-invalid-attribute -->
+        <a href="#">清空本地缓存</a>
+      </p>
+    </section>
   {:else if showSettingsPage}
     <button on:click={switchSettings}>❌</button>
     <Settings />
@@ -115,5 +139,34 @@
     background-color: transparent;
     border: none;
     z-index: 999;
+  }
+
+  .error {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .error > p {
+    padding: 45px;
+    font-size: 18px;
+  }
+
+  .error > * > a {
+    text-decoration: none;
+    padding: 10px;
+    font-size: 18px;
+    margin-left: 5px;
+    margin-right: 5px;
+    color: white;
+    border: 1px solid transparent;
+    background-color: black;
+  }
+
+  .error > * > a:hover {
+    color: black;
+    background-color: white;
+    border: 1px solid black;
   }
 </style>

@@ -2,17 +2,18 @@ import { derived, writable, type Readable } from 'svelte/store';
 import type { ApplicationState, Entry, LocalConfigure, PageConfigure, SubPage } from './types';
 import clone from 'just-clone';
 import { CONFIGURE } from './configure';
+import { createEmptyConfigure } from './utils/misc';
 
 function createLocalConfigure() {
     const defaultConfigure: LocalConfigure = {
         theme: {
             bgType: "gradient",
             bgGradient: "linear-gradient(-20deg, rgb(4, 114, 114) 0%, rgb(29, 16, 53) 100%)",
-            bgPicture: "url()"
+            bgPicture: "url('https://unsplash.it/1920/1080/?random')"
         },
         data: {
-            type: "Remote",
-            data: "/demo.json"
+            type: "Local",
+            data: JSON.stringify(createEmptyConfigure())
         }
     }
     const { subscribe, set, update } = writable(defaultConfigure as LocalConfigure);

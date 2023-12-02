@@ -1,8 +1,9 @@
 <script lang="ts">
-    import { applicationState } from "../store";
-    import type { MenuEntry } from "../types";
-    import ModalContainer from "./ModalContainer.svelte";
+    import { applicationState } from "../../store";
+    import type { MenuEntry } from "../../types";
+    import ModalContainer from "../ModalContainer.svelte";
     import { fade } from "svelte/transition";
+    import MenuEntry from "./MenuEntry.svelte";
 
     let showModal: boolean = false;
     let modalID = "MODAL_" + Math.random().toString();
@@ -101,8 +102,6 @@
         </div>
     </div>
 
-    <hr />
-
     <div class="menu">
         <div class="menu-actions">
             <button on:click|preventDefault={handleAddMenuEntry}
@@ -113,41 +112,11 @@
             >
         </div>
         <div class="menu-items">
-            {#each addedMenus as entry, index}
-                {#if entry.type == "Divider"}
-                    <section class="menu-divider">
-                        <strong>分割线</strong>
-                        <div class="menu-item-actions">
-                            <button
-                                class="delete"
-                                on:click|preventDefault={(e) => {
-                                    handleDeleteMenuEntry(index);
-                                }}>删除</button
-                            >
-                        </div>
-                    </section>
-                {:else}
-                    <section class="menu-item">
-                        <span>
-                            <strong>菜单项目</strong>
-                            <a href={entry.href} target="_blank">{entry.name}</a
-                            >
-                        </span>
-                        <div class="menu-item-actions">
-                            <button
-                                class="delete"
-                                on:click|preventDefault={(e) => {
-                                    handleDeleteMenuEntry(index);
-                                }}>删除</button
-                            >
-                        </div>
-                    </section>
-                {/if}
+            {#each addedMenus as entry}
+                <MenuEntry {entry} />
             {/each}
         </div>
     </div>
-
-    <hr />
 
     <div class="form-actions">
         <button on:click={handleSave}>保存</button>
@@ -179,6 +148,19 @@
 </div>
 
 <style>
+    div.menu {
+        margin-top: 10px;
+        margin-bottom: 10px;
+        border: 1px dashed gray;
+        border-radius: 8px;
+        padding: 5px;
+    }
+    fieldset {
+        border: none;
+    }
+    fieldset>span{
+        font-size: 16px;
+    }
     button.delete {
         background-color: rgb(195, 0, 0);
         color: white;
@@ -187,7 +169,8 @@
         cursor: pointer;
         border: none;
         background-color: rgba(0, 179, 255, 0.818);
-        padding: 5px;
+        padding: 10px;
+        min-width: 75px;
         border-radius: 8px;
     }
     .form-actions {
@@ -197,27 +180,12 @@
     .form-actions > button {
         margin-left: 5px;
     }
-    .menu-item,
-    .menu-divider {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    strong {
-        background-color: black;
-        color: white;
-        padding: 3px;
-    }
+    
     .menu-items {
         max-height: 400px;
-        overflow: auto;
+        overflow: auto; 
     }
-    .menu-items > section {
-        border: 1px solid;
-        padding: 5px;
-        margin-top: 5px;
-        margin-bottom: 5px;
-    }
+    
     .menu-actions {
         display: flex;
         justify-content: space-between;
@@ -233,6 +201,15 @@
     .holder {
         display: flex;
         justify-content: space-between;
+        padding-top: 25px;
+        padding-bottom: 20px;
+    }
+
+    .holder-left {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around;
+        align-items: center;
     }
 
     .holder-right {

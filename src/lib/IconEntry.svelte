@@ -18,16 +18,14 @@
 <div
     out:fade={{ duration: 100 }}
     in:fade={{ duration: 100 }}
-    on:contextmenu={(e) => {
-        entry.menu.length === 0 ? e.preventDefault() : contentMenu.show(e);
-    }}
+    on:contextmenu={(e) => contentMenu.show(e)}
     on:click={openTarget}
     on:keyup={openTarget}
     class="icon-entry"
     style={`background-image:url(${entry.img})`}
 >
-    {#if entry.menu.length !== 0}
-        <ContextMenu bind:this={contentMenu} settings={contentMenuSettings}>
+    <ContextMenu bind:this={contentMenu} settings={contentMenuSettings}>
+        {#if entry.menu.length !== 0}
             {#each entry.menu as menuEntry}
                 {#if menuEntry.type === "Divider"}
                     <Divider />
@@ -39,11 +37,23 @@
                     </Item>
                 {/if}
             {/each}
-        </ContextMenu>
-    {/if}
+        {/if}
+
+        <!-- Always have Delete and Edit entry -->
+        <Item>
+            <span>编辑</span>
+        </Item>
+        <Item>
+            <span class="red">删除</span>
+        </Item>
+    </ContextMenu>
 </div>
 
 <style>
+    .red {
+        color: red;
+    }
+
     a {
         color: unset;
         text-decoration: none;

@@ -3,7 +3,7 @@
     import { applicationState, localConfigure } from "../store";
     import IconEntry from "./IconEntry.svelte";
     import Controls from "./Controls.svelte";
-    import AddNewEntry from "./AddNewEntry.svelte";
+    import AddNewEntry from "./Models/AddNewEntry.svelte";
     import type { Entry } from "../types";
 
     let currentSubPage =
