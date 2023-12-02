@@ -3,6 +3,8 @@
     import type { Entry } from "../types";
     import type Menu from "svelte-contextmenu";
     import { fade } from "svelte/transition";
+    import ModalContainer from "./ModalContainer.svelte";
+    import { generateUUID } from "../utils/misc";
 
     export let entry: Entry;
 
@@ -11,6 +13,18 @@
 
     function openTarget() {
         window.open(entry.href);
+    }
+
+    /**
+     *
+     *  Modal : Confirm Delete Entry
+     *
+     */
+    let showDeleteModal: boolean = false;
+    let deleteModalID: string = generateUUID();
+
+    function showDeleteConfirmModal() {
+        showDeleteModal = true;
     }
 </script>
 
@@ -44,10 +58,25 @@
             <span>编辑</span>
         </Item>
         <Item>
-            <span class="red">删除</span>
+            <!-- svelte-ignore a11y-click-events-have-key-events -->
+            <span class="red" on:click={showDeleteConfirmModal}>删除</span>
         </Item>
     </ContextMenu>
 </div>
+
+<!-- Edit Entry Modal -->
+<!-- TODO -->
+
+<!-- Delete Entry Confirm Modal -->
+<ModalContainer bind:showModal={showDeleteModal} id={deleteModalID}>
+    <div slot="title">
+        <h2>你确认要删除吗？</h2>
+    </div>
+
+    <div>
+        <!-- Dispatch event to delete here? -->
+    </div>
+</ModalContainer>
 
 <style>
     .red {

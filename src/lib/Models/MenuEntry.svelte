@@ -3,34 +3,38 @@
 
     export let entry: MenuEntry;
 
-    export let handleDelete: (id: number) => void;
-    export let handleEdit: (id: number) => MenuEntry;
-    export let handleMove: (id: number, direction: "up" | "down") => void;
+    export let handleDelete: (id: number) => null;
+    export let handleEdit: (id: number) => null;
+    export let handleMove: (id: number, direction: "up" | "down") => null;
 </script>
 
 {#if entry.type == "Divider"}
     <section class="menu-entry menu-divider">
         <div class="menu-entry-left">
-            <button>↑</button>
-            <button>↓</button>
+            <button on:click={handleMove(entry.id, "up")}>↑</button>
+            <button on:click={handleMove(entry.id, "down")}>↓</button>
             <strong>分割线</strong>
         </div>
 
         <div class="menu-item-actions">
-            <button class="delete">删除</button>
+            <button class="delete" on:click={handleDelete(entry.id)}
+                >删除</button
+            >
         </div>
     </section>
 {:else}
     <section class="menu-entry menu-item">
         <div class="menu-entry-left">
-            <button>↑</button>
-            <button>↓</button>
-            <strong>{entry.name}</strong>
+            <button on:click={handleMove(entry.id, "up")}>↑</button>
+            <button on:click={handleMove(entry.id, "down")}>↓</button>
+            <strong> {entry.name} <em>({entry.href})</em></strong>
         </div>
 
         <div class="menu-item-actions">
-            <button>编辑</button>
-            <button class="delete">删除</button>
+            <button on:click={handleEdit(entry.id)}>编辑</button>
+            <button class="delete" on:click={handleDelete(entry.id)}
+                >删除</button
+            >
         </div>
     </section>
 {/if}

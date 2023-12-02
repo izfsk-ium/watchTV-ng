@@ -1,15 +1,17 @@
 <script lang="ts">
     import { applicationState } from "../../store";
-    import type { MenuEntry } from "../../types";
     import ModalContainer from "../ModalContainer.svelte";
+    import type { MenuEntry as MenuEntry_T } from "../../types";
     import { fade } from "svelte/transition";
     import MenuEntry from "./MenuEntry.svelte";
+    import { isValidHttpUrl } from "../../utils/misc";
 
-    let showModal: boolean = false;
+    let showAddEntry: boolean = false;
+
     let modalID = "MODAL_" + Math.random().toString();
 
     function handleAddNew() {
-        showModal = true;
+        showAddEntry = true;
     }
 
     let name: string = "";
@@ -19,32 +21,19 @@
     let isError: boolean = false;
     let errorMsg: string = "";
 
-    let addedMenus: Array<MenuEntry> = [];
+    let addedMenus: Array<MenuEntry_T> = [];
 
     function handleAddDivider() {
         addedMenus.push({
+            id: Math.max(-1, ...addedMenus.map((i) => i.id)) + 1,
             type: "Divider",
         });
         addedMenus = addedMenus;
     }
 
     function handleAddMenuEntry() {
-        const name = prompt("菜单显示名称：");
-        let href = prompt("目的地链接：");
-        if (!href?.startsWith("http")) {
-            href = "http://" + href;
-        }
-        addedMenus.push({
-            type: "Entry",
-            name: name?.toString(),
-            href: href,
-        });
-        addedMenus = addedMenus;
-    }
-
-    function handleDeleteMenuEntry(index: number) {
-        addedMenus.splice(index, 1);
-        addedMenus = addedMenus;
+        currentMenuEntryID = null;
+        showEditMenuEntry = true;
     }
 
     function handleSave() {
@@ -64,16 +53,125 @@
     }
 
     function handleClose() {
-        showModal = false;
-        (name = ""),
-            (href = ""),
-            (icon = "assets/default_entry_icon.svg"),
-            (addedMenus = []);
+        showAddEntry = false;
+        name = "";
+        href = "";
+        icon = "assets/default_entry_icon.svg";
+        addedMenus = [];
         (document.getElementById(modalID) as HTMLDialogElement).close();
+    }
+
+    // menu edit modal
+    let showEditMenuEntry: boolean = false;
+    let currentMenuEntryID: number | null = null; // null = new
+    let currentMenuEntryName: string = "";
+    let currentMenuEntryTarget: string = "";
+
+    function handleSaveMenuEntry() {
+        if (
+            !isValidHttpUrl(currentMenuEntryTarget) ||
+            currentMenuEntryName.trim().length == 0
+        ) {
+            alert("无效的目标或名称为空！");
+            return;
+        }
+        if (currentMenuEntryID === null) {
+            // new item
+        } else {
+            // delete old
+            handleDeleteMenuEntry(currentMenuEntryID);
+        }
+        addedMenus.push({
+            id:
+                currentMenuEntryID == null
+                    ? Math.max(-1, ...addedMenus.map((i) => i.id)) + 1
+                    : currentMenuEntryID,
+            type: "Entry",
+            name: currentMenuEntryName,
+            href: currentMenuEntryTarget,
+        } as MenuEntry_T);
+
+        addedMenus = addedMenus;
+        handleCancelEditMenuEntry(); // close and clean up
+    }
+
+    function handleCancelEditMenuEntry() {
+        currentMenuEntryName = "";
+        currentMenuEntryTarget = "";
+        currentMenuEntryID = null;
+        showEditMenuEntry = false;
+        (document.getElementById(modalID + "_ma") as HTMLDialogElement).close();
+    }
+
+    function handleDeleteMenuEntry(targetEntryID: number) {
+        addedMenus = addedMenus.filter((i) => i.id !== targetEntryID);
+        return null;
+    }
+
+    function handleEditMenuEntry(targetEntryID: number) {
+        const originalEntry = addedMenus.filter(
+            (i) => i.id == targetEntryID,
+        )[0];
+        currentMenuEntryID = targetEntryID;
+        currentMenuEntryName = originalEntry.name || "";
+        currentMenuEntryTarget = originalEntry.href || "";
+        showEditMenuEntry = true;
+        return null;
+    }
+
+    function handleMoveMenuEntry(id: number, direction: "up" | "down"): null {
+        const originalEntry = addedMenus.filter((i) => i.id == id)[0];
+        if (direction == "down") {
+            // swap it's id with the next one
+            const nextOne =
+                addedMenus[addedMenus.findIndex((i) => i.id == id) + 1];
+            if (typeof nextOne === "undefined") {
+                return null;
+            }
+            let tmp = nextOne.id;
+            nextOne.id = id;
+            originalEntry.id = tmp;
+        } else {
+            // swap it's id with the pervious one
+            const perviousOne =
+                addedMenus[addedMenus.findIndex((i) => i.id == id) - 1];
+            if (typeof perviousOne === "undefined") {
+                return null;
+            }
+            let tmp = perviousOne.id;
+            perviousOne.id = id;
+            originalEntry.id = tmp;
+        }
+
+        addedMenus = addedMenus;
+        return null;
     }
 </script>
 
-<ModalContainer bind:showModal id={modalID}>
+<ModalContainer bind:showModal={showEditMenuEntry} id={modalID + "_ma"}>
+    <div slot="title">
+        <h2>编辑菜单项目</h2>
+    </div>
+
+    <div class="holder-left">
+        <fieldset>
+            <span>名称：</span>
+            <input required bind:value={currentMenuEntryName} />
+        </fieldset>
+        <fieldset>
+            <span>链接：</span>
+            <input required bind:value={currentMenuEntryTarget} />
+        </fieldset>
+    </div>
+
+    <div class="form-actions">
+        <button on:click={handleSaveMenuEntry}>保存</button>
+        <button class="delete" on:click={handleCancelEditMenuEntry}>取消</button
+        >
+    </div>
+</ModalContainer>
+
+<ModalContainer bind:showModal={showAddEntry} id={modalID}>
     <div slot="title">
         {#if isError}
             <h2>错误：{errorMsg}</h2>
@@ -112,8 +210,13 @@
             >
         </div>
         <div class="menu-items">
-            {#each addedMenus as entry}
-                <MenuEntry {entry} />
+            {#each addedMenus.sort((a, b) => a.id - b.id) as entry}
+                <MenuEntry
+                    handleDelete={handleDeleteMenuEntry}
+                    handleEdit={handleEditMenuEntry}
+                    handleMove={handleMoveMenuEntry}
+                    {entry}
+                />
             {/each}
         </div>
     </div>
@@ -158,7 +261,7 @@
     fieldset {
         border: none;
     }
-    fieldset>span{
+    fieldset > span {
         font-size: 16px;
     }
     button.delete {
@@ -180,12 +283,12 @@
     .form-actions > button {
         margin-left: 5px;
     }
-    
+
     .menu-items {
         max-height: 400px;
-        overflow: auto; 
+        overflow: auto;
     }
-    
+
     .menu-actions {
         display: flex;
         justify-content: space-between;
