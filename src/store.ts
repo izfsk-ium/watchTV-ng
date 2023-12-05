@@ -2,7 +2,7 @@ import { derived, writable, type Readable } from 'svelte/store';
 import type { ApplicationState, Entry, LocalConfigure, PageConfigure, SubPage } from './types';
 import clone from 'just-clone';
 import { CONFIGURE } from './configure';
-import { createEmptyConfigure } from './utils/misc';
+import { createEmptyConfigure, generateUUID } from './utils/misc';
 
 function createLocalConfigure() {
     const defaultConfigure: LocalConfigure = {
@@ -50,17 +50,55 @@ function createApplicationState() {
             original.ptrPage = targetPageUUID;
             return original;
         }),
+        addNewSubPage: (newPageUUID: string) => update((original) => {
+            original.pageConfigure.pages[newPageUUID] = {
+                id: Math.max(0, ...Object.values(original.pageConfigure.pages).map(i => i.id)) + 1,
+                name: "未命名",
+                character: "🔥",
+                entries: []
+            }
+            return original;
+        }),
         addNewEntry: (targetSubPage: string, entryInfo: Entry) => update((original) => {
             original.pageConfigure.pages[targetSubPage].entries.push({
-                id: original.pageConfigure.pages[original.ptrPage].entries.length + 1,
+                id: Math.max(-1, ...original.pageConfigure.pages[targetSubPage].entries.map(i => i.id)) + 1,
                 name: entryInfo.name,
                 img: entryInfo.img,
                 href: entryInfo.href,
                 menu: entryInfo.menu
             });
-            console.debug("Store: a new entry is added to current subpage.");
+            console.debug("Store: a new entry is added to current subpage.", original.pageConfigure);
             console.debug("Store: copy as local configure.");
             localConfigure.copyAsLocal(original.pageConfigure);
+            return original;
+        }),
+        deleteEntry: (targetSubPage: string, entryID: number) => update((original) => {
+            original.pageConfigure.pages[targetSubPage].entries =
+                original.pageConfigure.pages[targetSubPage].entries.filter(i => i.id != entryID);
+            console.debug(`Store: a entry with ID ${entryID} has been deleted.`);
+            localConfigure.copyAsLocal(original.pageConfigure);
+            return original;
+        }),
+        updateEntry: (targetSubPage: string, newEntry: Entry) => update((original) => {
+            newEntry = clone(newEntry);
+
+            // delete
+            original.pageConfigure.pages[targetSubPage].entries =
+                original.pageConfigure.pages[targetSubPage].entries.filter(i => i.id != newEntry.id);
+
+            // re-push
+            original.pageConfigure.pages[targetSubPage].entries.push(newEntry);
+
+            console.debug("Store: Entry updated.", original.pageConfigure);
+            localConfigure.copyAsLocal(original.pageConfigure);
+            return original;
+        }),
+        updateSubPageTitle: (newTitle: string) => update((original) => {
+            original.pageConfigure.pages[original.ptrPage].name = newTitle;
+            return original;
+        }),
+        updateSubPageEmoji: (newEmoji: string) => update((original) => {
+            original.pageConfigure.pages[original.ptrPage].character = newEmoji;
             return original;
         })
     }

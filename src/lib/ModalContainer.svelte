@@ -8,19 +8,16 @@
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events a11y-no-noninteractive-element-interactions -->
-<dialog
-    {id}
-    bind:this={dialog}
-    on:close={() => (showModal = false)}
-    on:click|self={() => dialog.close()}
->
-    <!-- svelte-ignore a11y-no-static-element-interactions -->
-    <div on:click|stopPropagation>
-        <slot name="title" />
-        <hr />
-        <slot />
-    </div>
-</dialog>
+{#if showModal}
+    <dialog {id} bind:this={dialog} on:close={() => (showModal = false)}>
+        <!-- svelte-ignore a11y-no-static-element-interactions -->
+        <div on:click|stopPropagation>
+            <slot name="title" />
+            <hr />
+            <slot />
+        </div>
+    </dialog>
+{/if}
 
 <style>
     dialog {
@@ -46,7 +43,7 @@
 
     @keyframes zoom {
         from {
-            transform: scale(0.95);
+            transform: scale(0.75);
         }
         to {
             transform: scale(1);

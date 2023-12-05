@@ -5,6 +5,8 @@
     import { fade } from "svelte/transition";
     import ModalContainer from "./ModalContainer.svelte";
     import { generateUUID } from "../utils/misc";
+    import { applicationState } from "../store";
+    import EditEntry from "./Models/EditEntry.svelte";
 
     export let entry: Entry;
 
@@ -21,10 +23,36 @@
      *
      */
     let showDeleteModal: boolean = false;
-    let deleteModalID: string = generateUUID();
+    let deleteModalID: string = "entryDelete_" + generateUUID();
 
     function showDeleteConfirmModal() {
         showDeleteModal = true;
+    }
+
+    const DeleteConfirmModalHandles = {
+        handleClose: () => {
+            showDeleteModal = false;
+            (
+                document.getElementById(deleteModalID) as HTMLDialogElement
+            ).close();
+        },
+
+        handleConfirm: () => {
+            applicationState.deleteEntry($applicationState.ptrPage, entry.id);
+            DeleteConfirmModalHandles.handleClose();
+        },
+    };
+
+    /**
+     *
+     * Modal : Edit
+     *
+     */
+    let showEditModal: boolean = false;
+    let editModalID = () => "entryEdit_" + generateUUID();
+
+    function showEditEntryModal() {
+        showEditModal = true;
     }
 </script>
 
@@ -55,7 +83,8 @@
 
         <!-- Always have Delete and Edit entry -->
         <Item>
-            <span>编辑</span>
+            <!-- svelte-ignore a11y-click-events-have-key-events -->
+            <span on:click={showEditEntryModal}>编辑</span>
         </Item>
         <Item>
             <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -65,7 +94,16 @@
 </div>
 
 <!-- Edit Entry Modal -->
-<!-- TODO -->
+{#if showEditModal}
+    <EditEntry
+        modalID={editModalID()}
+        editTarget={entry}
+        {showEditModal}
+        on:modalClose={(e) => {
+            showEditModal = false;
+        }}
+    />
+{/if}
 
 <!-- Delete Entry Confirm Modal -->
 <ModalContainer bind:showModal={showDeleteModal} id={deleteModalID}>
@@ -74,11 +112,38 @@
     </div>
 
     <div>
-        <!-- Dispatch event to delete here? -->
+        <p>删除之后将不可撤销！</p>
+    </div>
+
+    <div class="form-actions">
+        <button
+            on:click={DeleteConfirmModalHandles.handleConfirm}
+            class="confirm-delete">确定</button
+        >
+        <button on:click={DeleteConfirmModalHandles.handleClose}>取消</button>
     </div>
 </ModalContainer>
 
 <style>
+    .form-actions {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .form-actions > button {
+        cursor: pointer;
+        border: none;
+        background-color: rgba(0, 179, 255, 0.818);
+        padding: 10px;
+        min-width: 75px;
+        border-radius: 8px;
+    }
+
+    .form-actions > button.confirm-delete {
+        background-color: rgb(195, 0, 0);
+        color: white;
+    }
+
     .red {
         color: red;
     }

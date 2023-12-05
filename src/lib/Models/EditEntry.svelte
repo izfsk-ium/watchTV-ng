@@ -1,27 +1,43 @@
 <script lang="ts">
     import { applicationState } from "../../store";
     import ModalContainer from "../ModalContainer.svelte";
-    import type { MenuEntry as MenuEntry_T } from "../../types";
-    import { fade } from "svelte/transition";
+    import type { Entry, MenuEntry as MenuEntry_T } from "../../types";
     import MenuEntry from "./MenuEntry.svelte";
     import { isValidHttpUrl } from "../../utils/misc";
+    import { onMount } from "svelte";
+    import { createEventDispatcher } from "svelte";
 
-    let showAddEntry: boolean = false;
+    const dispatch = createEventDispatcher();
 
-    let modalID = "MODAL_" + Math.random().toString();
+    /**
+     * @prop showEditModal : should top-level modal show
+     * @prop modalID is unique ID of modal element
+     * @prop editTarget is Entry or null. If null then create new entry
+     */
+    export let showEditModal: boolean;
+    export let modalID: string;
+    export let editTarget: Entry | null;
 
-    function handleAddNew() {
-        showAddEntry = true;
-    }
-
+    // default values
     let name: string = "";
     let icon: string = "assets/default_entry_icon.svg";
     let href: string = "";
+    let addedMenus: Array<MenuEntry_T> = [];
+
+    onMount(() => {
+        if (editTarget !== null) {
+            console.debug("EditEntry : Edit entry " + editTarget);
+            name = editTarget.name;
+            icon = editTarget.img;
+            href = editTarget.href;
+            addedMenus = editTarget.menu;
+        } else {
+            console.debug("EditEntry : Create new entry.");
+        }
+    });
 
     let isError: boolean = false;
     let errorMsg: string = "";
-
-    let addedMenus: Array<MenuEntry_T> = [];
 
     function handleAddDivider() {
         addedMenus.push({
@@ -41,19 +57,33 @@
             isError = true;
             errorMsg = "有字段没有填写，请检查。";
         } else {
-            applicationState.addNewEntry($applicationState.ptrPage, {
-                id: -1, // auto increased by store
-                name: name,
-                img: icon,
-                href: href,
-                menu: addedMenus,
-            });
+            if (editTarget === null) {
+                // add new entry.
+                applicationState.addNewEntry($applicationState.ptrPage, {
+                    id: -1, // auto increased by store
+                    name: name,
+                    img: icon,
+                    href: href,
+                    menu: addedMenus,
+                });
+            } else {
+                // Edit exist entry
+                applicationState.updateEntry($applicationState.ptrPage, {
+                    id: editTarget.id,
+                    name: name,
+                    img: icon,
+                    href: href,
+                    menu: addedMenus,
+                });
+            }
+
             handleClose();
         }
     }
 
     function handleClose() {
-        showAddEntry = false;
+        dispatch("modalClose", {});
+        showEditModal = false;
         name = "";
         href = "";
         icon = "assets/default_entry_icon.svg";
@@ -61,7 +91,11 @@
         (document.getElementById(modalID) as HTMLDialogElement).close();
     }
 
-    // menu edit modal
+    /**
+     *
+     * Modal : Edit menus
+     *
+     */
     let showEditMenuEntry: boolean = false;
     let currentMenuEntryID: number | null = null; // null = new
     let currentMenuEntryName: string = "";
@@ -171,7 +205,7 @@
     </div>
 </ModalContainer>
 
-<ModalContainer bind:showModal={showAddEntry} id={modalID}>
+<ModalContainer bind:showModal={showEditModal} id={modalID}>
     <div slot="title">
         {#if isError}
             <h2>错误：{errorMsg}</h2>
@@ -226,29 +260,6 @@
         <button class="delete" on:click={handleClose}>取消</button>
     </div>
 </ModalContainer>
-
-<!-- svelte-ignore a11y-no-static-element-interactions -->
-<!-- svelte-ignore a11y-click-events-have-key-events -->
-<div
-    in:fade={{ duration: 100, delay: 100 }}
-    class="icon-entry"
-    on:click={handleAddNew}
->
-    <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="58"
-        height="58"
-        fill="white"
-        viewBox="0 0 16 16"
-    >
-        <path
-            d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"
-        />
-        <path
-            d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"
-        />
-    </svg>
-</div>
 
 <style>
     div.menu {
@@ -319,27 +330,5 @@
         display: flex;
         justify-content: center;
         align-items: center;
-    }
-
-    .icon-entry {
-        min-height: 128px;
-        min-width: 128px;
-        background-color: #8686861c;
-        display: inline-flex;
-        justify-content: center;
-        align-items: center;
-        transition: 0.22s;
-        box-shadow:
-            1px 2px 4px rgb(0 0 0 / 10%),
-            2px 2px 4px rgba(0, 0, 0, 0.1);
-        border-radius: 30px;
-        background-size: contain;
-        cursor: pointer;
-    }
-
-    .icon-entry:hover {
-        transform: scale(1.2);
-        background-color: #f3f3f34b;
-        transition: 0.12s;
     }
 </style>

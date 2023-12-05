@@ -1,10 +1,10 @@
 <script lang="ts">
     import { fade } from "svelte/transition";
-    import { applicationState, localConfigure } from "../store";
+    import { applicationState } from "../store";
     import IconEntry from "./IconEntry.svelte";
     import Controls from "./Controls.svelte";
-    import AddNewEntry from "./Models/AddNewEntry.svelte";
     import type { Entry } from "../types";
+    import AddNewEntry from "./AddNewEntry.svelte";
 
     let currentSubPage =
         $applicationState.pageConfigure.pages[$applicationState.ptrPage];
@@ -66,11 +66,10 @@
 </script>
 
 <article out:fade={{ duration: 100 }} in:fade={{ duration: 100 }}>
-    {#each currentShowingEntries as entry}
+    {#each currentShowingEntries.sort((i, j) => i.id - j.id) as entry}
         <IconEntry {entry} />
     {/each}
 
-    <!-- Add new item button, Remote is immutable -->
     {#if currentShowingEntries.length !== 10}
         <AddNewEntry />
     {/if}
