@@ -1,8 +1,11 @@
 <script lang="ts">
+    import type Menu from "svelte-contextmenu";
+    import ContextMenu, { Item, Divider, Settings } from "svelte-contextmenu";
     import { applicationState } from "../store";
     import { generateUUID } from "../utils/misc";
     import IconAdd from "./Componments/IconAdd.svelte";
     import ChooseEmoji from "./Models/ChooseEmoji.svelte";
+    import ConfirmSubPageDelete from "./Models/ConfirmSubPageDelete.svelte";
 
     let currentSubPage =
         $applicationState.pageConfigure.pages[$applicationState.ptrPage];
@@ -35,19 +38,60 @@
     }
 
     let showEmojiModal: boolean = false;
-    function handleEmojiDbClick(id: string) {
-        if (id === $applicationState.ptrPage) {
-            showEmojiModal = true;
-        }
-    }
+    let showDeleteConfirmModal: boolean = false;
+
+    // context menu
+    let focus: string = "";
+    let contentMenu: Menu;
+    const contentMenuSettings = Settings.DefaultCss();
 </script>
+
+<!-- ContextMenu -->
+<ContextMenu bind:this={contentMenu} settings={contentMenuSettings}>
+    <Item
+        on:click={() => {
+            showDeleteConfirmModal = true;
+        }}
+    >
+        <span>删除页面</span>
+    </Item>
+    <Item
+        on:click={() => {
+            showEmojiModal = true;
+        }}
+    >
+        <span>更换图标</span>
+    </Item>
+</ContextMenu>
 
 <!-- Choose Emoji Modal -->
 <ChooseEmoji
-    on:modalClose={() => {
+    on:modalClose={(e) => {
         showEmojiModal = false;
+        applicationState.updateSubPageEmoji(e.detail.emoji, focus);
+        focus = "";
     }}
     showModal={showEmojiModal}
+/>
+
+<!-- Confirm delection modal -->
+<ConfirmSubPageDelete
+    showModal={showDeleteConfirmModal}
+    numOfEntries={focus == ""
+        ? 0
+        : $applicationState.pageConfigure.pages[focus].entries.length}
+    nameOfSubPage={focus == ""
+        ? ""
+        : $applicationState.pageConfigure.pages[focus].name}
+    on:cancel={(e) => {
+        showDeleteConfirmModal = false;
+        focus = "";
+    }}
+    on:confirm={(e) => {
+        applicationState.deleteSubPage(focus);
+        showDeleteConfirmModal = false;
+        focus = "";
+    }}
 />
 
 <header>
@@ -70,8 +114,10 @@
             <!-- svelte-ignore a11y-click-events-have-key-events -->
             <!-- svelte-ignore a11y-no-static-element-interactions -->
             <span
-                on:contextmenu|preventDefault={() => {
-                    handleEmojiDbClick(id);
+                on:contextmenu={(e) => {
+                    contentMenu.show(e);
+                    focus = id;
+                    console.debug(id);
                 }}
                 on:click={() => {
                     switchSubPage(id);

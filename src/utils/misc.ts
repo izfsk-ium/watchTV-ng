@@ -1,7 +1,7 @@
 import type { PageConfigure } from "../types";
 
 export function isValidHttpUrl(string: string) {
-    let url;
+    let url: any;
 
     try {
         url = new URL(string);
@@ -44,7 +44,6 @@ export function generateUUID() { // Public Domain/MIT
 }
 
 export function createEmptyConfigure(): PageConfigure {
-    const defaultPage: string = generateUUID();
     return {
         id: generateUUID(),
         author: "Anon",

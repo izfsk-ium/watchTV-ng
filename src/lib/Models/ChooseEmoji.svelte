@@ -2,7 +2,6 @@
     import { onMount } from "svelte";
     import { generateUUID } from "../../utils/misc";
     import ModalContainer from "../ModalContainer.svelte";
-    import { applicationState } from "../../store";
     import { createEventDispatcher } from "svelte";
 
     export let showModal: boolean;
@@ -26,8 +25,7 @@
     });
 
     function handleCloseModal() {
-        (document.getElementById(modalID) as HTMLDialogElement).close();
-        dispatch("modalClose", {});
+        (document.getElementById(modalID) as any).close();
     }
 </script>
 
@@ -47,8 +45,10 @@
                 {#each allEmojis as emoji}
                     <button
                         on:click={() => {
-                            applicationState.updateSubPageEmoji(emoji);
                             handleCloseModal();
+                            dispatch("modalClose", {
+                                emoji: emoji,
+                            });
                         }}>{emoji}</button
                     >
                 {/each}

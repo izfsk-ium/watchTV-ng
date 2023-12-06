@@ -8,6 +8,7 @@
     import {
         downloadString,
         fetchWithCROSProxy,
+        generateUUID,
         isValidHttpUrl,
     } from "../utils/misc";
     import { createCheckers, func } from "ts-interface-checker";
@@ -186,7 +187,8 @@
             <fieldset>
                 <span>远程配置文件地址</span>
                 <div class="data-actions">
-                    <input bind:value={remoteResourceURL} />
+                    <input disabled placeholder="暂不支持" />
+                    <!-- <input bind:value={remoteResourceURL} /> -->
                     <button on:click={() => checkRemoteResources()}>加载</button
                     >
                 </div>
@@ -220,10 +222,25 @@
             </div>
         </fieldset>
         <fieldset>
-            <span>分享给朋友</span>
+            <span>更多</span>
             <div>
                 <button on:click={(e) => window.open(CONFIGURE.GITHUB_REPO)}
                     >前往 Github 仓库</button
+                >
+                <button
+                    on:click={(e) => {
+                        const confirmWords = generateUUID().substring(0, 5);
+                        if (
+                            prompt("输入验证码 " + confirmWords) ===
+                            confirmWords
+                        ) {
+                            localStorage.clear();
+                            sessionStorage.clear();
+                            location.reload();
+                        } else {
+                            alert("验证码不匹配。");
+                        }
+                    }}><strong>清除数据</strong></button
                 >
             </div>
         </fieldset>

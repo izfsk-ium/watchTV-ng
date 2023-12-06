@@ -9,7 +9,7 @@ function createLocalConfigure() {
         theme: {
             bgType: "gradient",
             bgGradient: "linear-gradient(-20deg, rgb(4, 114, 114) 0%, rgb(29, 16, 53) 100%)",
-            bgPicture: "url('https://unsplash.it/1920/1080/?random')"
+            bgPicture: "https://unsplash.it/1920/1080/?random"
         },
         data: {
             type: "Local",
@@ -54,9 +54,10 @@ function createApplicationState() {
             original.pageConfigure.pages[newPageUUID] = {
                 id: Math.max(0, ...Object.values(original.pageConfigure.pages).map(i => i.id)) + 1,
                 name: "未命名",
-                character: "🔥",
+                character: "？",
                 entries: []
             }
+            localConfigure.copyAsLocal(original.pageConfigure);
             return original;
         }),
         addNewEntry: (targetSubPage: string, entryInfo: Entry) => update((original) => {
@@ -95,10 +96,29 @@ function createApplicationState() {
         }),
         updateSubPageTitle: (newTitle: string) => update((original) => {
             original.pageConfigure.pages[original.ptrPage].name = newTitle;
+            localConfigure.copyAsLocal(original.pageConfigure);
             return original;
         }),
-        updateSubPageEmoji: (newEmoji: string) => update((original) => {
-            original.pageConfigure.pages[original.ptrPage].character = newEmoji;
+        updateSubPageEmoji: (newEmoji: string, targetSubPage: string) => update((original) => {
+            original.pageConfigure.pages[targetSubPage].character = newEmoji;
+            localConfigure.copyAsLocal(original.pageConfigure);
+            return original;
+        }),
+        deleteSubPage: (targetSubPage: string) => update((original) => {
+            let filteredPages: { [name: string]: SubPage } = {};
+            for (const i of Object.keys(original.pageConfigure.pages)) {
+                if (i != targetSubPage) {
+                    filteredPages[i] = original.pageConfigure.pages[i];
+                }
+            }
+            original.pageConfigure.pages = clone(filteredPages);
+            if (Object.keys(original.pageConfigure.pages).length === 0) {
+                applicationState.addNewSubPage(generateUUID());
+            }
+            if (original.ptrPage == targetSubPage) {
+                original.ptrPage = Object.keys(original.pageConfigure.pages)[0] || "";
+            }
+            localConfigure.copyAsLocal(original.pageConfigure);
             return original;
         })
     }

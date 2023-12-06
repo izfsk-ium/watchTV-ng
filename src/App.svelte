@@ -97,7 +97,14 @@
       <p>
         <a href="/">刷新</a>
         <!-- svelte-ignore a11y-invalid-attribute -->
-        <a href="#">清空本地缓存</a>
+        <a
+          href="#"
+          on:click={(e) => {
+            localStorage.clear();
+            sessionStorage.clear();
+            location.reload();
+          }}>清空本地缓存</a
+        >
       </p>
     </section>
   {:else if showSettingsPage}

@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { onMount } from "svelte";
     import { fade } from "svelte/transition";
     import EditEntry from "./Models/EditEntry.svelte";
     import { generateUUID } from "../utils/misc";
